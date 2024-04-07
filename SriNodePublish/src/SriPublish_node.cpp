@@ -64,6 +64,8 @@ void rtDataHandler(std::vector<RTData<float>> &rtData)
                     }
 
                     // 发布wrench_msg
+                    std::cout<<"force_x:"<<wrench_msg.force.x<<"force_y:"<<wrench_msg.force.y<<"force_z:"<<wrench_msg.force.z<<std::endl;
+                    std::cout<<"torque_x:"<<wrench_msg.torque.x<<"torque_y:"<<wrench_msg.torque.y<<"torque_z:"<<wrench_msg.torque.z<<std::endl;
                     wrench_pub.publish(wrench_msg);
                 }
             }
