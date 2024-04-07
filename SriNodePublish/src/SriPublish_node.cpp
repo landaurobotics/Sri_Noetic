@@ -78,7 +78,7 @@ int main(int argc, char  *argv[])
 
     ros::init(argc, argv, "Sri_data_publisher");                                         // 初始化ROS节点
     ros::NodeHandle nh;                                                                  // 创建NodeHandle对象以管理节点
-    ros::Publisher wrench_pub = nh.advertise<geometry_msgs::Wrench>("wrench_topic", 10); // 创建publisher，发布至"wrench_topic"，队列大小为10
+    wrench_pub = nh.advertise<geometry_msgs::Wrench>("wrench_topic", 10); // 创建publisher，发布至"wrench_topic"，队列大小为10
     // 从参数服务器获取参数
     if (ros::param::has("~ip_address"))
     {
