@@ -6,8 +6,8 @@
 #include "geometry_msgs/Wrench.h"
 using namespace SRI;
 ros::Publisher wrench_pub;
-ros::Time last_publish_time = ros::Time(0);      // Global variable to control publishing frequency
-double global_publish_frequency = 0.01;          // Global variable to record the time of the last publication
+ros::Time last_publish_time = ros::Time(0);      // Global variable to record the time of the last publication
+double global_publish_frequency = 0.01;          // Global variable to control publishing frequency
 
 /**
  * @brief Handles the real-time data and publishes the wrench message.
@@ -76,8 +76,8 @@ void rtDataHandler(std::vector<RTData<float>> &rtData)
 }
 int main(int argc, char  *argv[])
 {
-    std::string ip_address = "192.168.2.109"; // Global IP address ， default value is "192.168.2.109".
-    int port_number = 4008;                   // Global port number, default is 4008
+    std::string ip_address = "192.168.2.109"; // IP address ， default value is "192.168.2.109".
+    int port_number = 4008;                   // port number, default is 4008
 
     ros::init(argc, argv, "Sri_data_publisher");                                         
     ros::NodeHandle nh;                                                                  
