@@ -6,28 +6,29 @@
 #include "geometry_msgs/Wrench.h"
 using namespace SRI;
 ros::Publisher wrench_pub;
-ros::Time last_publish_time = ros::Time(0);      // 上一次发布的时间
-double global_publish_frequency = 0.01;          // 全局发布频率，默认为0.1秒
-std::string global_ip_address = "192.168.2.109"; // 全局IP地址，默认为"192.168.2.109"
-int global_port_number = 4008;                   // 全局端口号，默认为4008
+ros::Time last_publish_time = ros::Time(0);      // Global variable to control publishing frequency
+double global_publish_frequency = 0.01;          // Global variable to record the time of the last publication
+
 /**
- * 处理实时数据的函数
- *
- * @param rtData 引用传递，一个包含RTData类型的浮点数向量。每个RTData元素代表一个时间点的6个通道的数据。
- *
- * 该函数主要功能是遍历输入的实时数据向量，并对每个数据点的6个通道进行处理。
- * 但实际对数据的处理逻辑（如赋值或计算）未实现。
+ * @brief Handles the real-time data and publishes the wrench message.
+ * 
+ * This function takes a vector of RTData objects and converts them into a geometry_msgs::Wrench message.
+ * It limits the publishing frequency based on the global_publish_frequency parameter.
+ * The wrench message is published only if the time difference between the current time and the last publish time
+ * is greater than or equal to the threshold duration.
+ * 
+ * @param rtData The vector of RTData objects containing real-time data.
  */
 void rtDataHandler(std::vector<RTData<float>> &rtData)
 {
     geometry_msgs::Wrench wrench_msg;
-    ros::Duration threshold_duration(global_publish_frequency); // 将发布频率转换为ros::Duration对象
+    ros::Duration threshold_duration(global_publish_frequency); // Convert publishing frequency to ros::duration object
 
     ros::Time current_time = ros::Time::now();
-    if (current_time - last_publish_time >= threshold_duration) // 限制发布频率
+    if (current_time - last_publish_time >= threshold_duration) // Limit publishing frequency
     {
 
-        // 下面的循环用于遍历输入的实时数据，每个数据包含6个通道的数据
+        // The following loop is used to traverse the input real-time data, each data contains 6 channels of data
         for (int i = 0; i < rtData.size(); i++)
         {
             for (int j = 0; j < 6; j++)
@@ -39,7 +40,7 @@ void rtDataHandler(std::vector<RTData<float>> &rtData)
                     {
                         switch (j)
                         {
-                        case 0: // 将rtData[i][j]赋值给wrench_msg的力分量
+                        case 0: // Assign rtData[i][j] to the force component of wrench msg
                             wrench_msg.force.x = rtData[i][j];
                             break;
                         case 1:
@@ -48,7 +49,7 @@ void rtDataHandler(std::vector<RTData<float>> &rtData)
                         case 2:
                             wrench_msg.force.z = rtData[i][j];
                             break;
-                        case 3: // 将rtData[i][j]赋值给wrench_msg的扭矩分量
+                        case 3: // Assign rtData[i][j] to the torque component of wrench msg
                             wrench_msg.torque.x = rtData[i][j];
                             break;
                         case 4:
@@ -63,7 +64,7 @@ void rtDataHandler(std::vector<RTData<float>> &rtData)
                         }
                     }
 
-                    // 发布wrench_msg
+                    // Publish wrench msg
                     std::cout<<"force_x:"<<wrench_msg.force.x<<"force_y:"<<wrench_msg.force.y<<"force_z:"<<wrench_msg.force.z<<std::endl;
                     std::cout<<"torque_x:"<<wrench_msg.torque.x<<"torque_y:"<<wrench_msg.torque.y<<"torque_z:"<<wrench_msg.torque.z<<std::endl;
                     wrench_pub.publish(wrench_msg);
@@ -75,32 +76,34 @@ void rtDataHandler(std::vector<RTData<float>> &rtData)
 }
 int main(int argc, char  *argv[])
 {
+    std::string ip_address = "192.168.2.109"; // Global IP address ， default value is "192.168.2.109".
+    int port_number = 4008;                   // Global port number, default is 4008
 
-    ros::init(argc, argv, "Sri_data_publisher");                                         // 初始化ROS节点
-    ros::NodeHandle nh;                                                                  // 创建NodeHandle对象以管理节点
-    wrench_pub = nh.advertise<geometry_msgs::Wrench>("wrench_topic", 10); // 创建publisher，发布至"wrench_topic"，队列大小为10
-    // 从参数服务器获取参数
+    ros::init(argc, argv, "Sri_data_publisher");                                         
+    ros::NodeHandle nh;                                                                  
+    wrench_pub = nh.advertise<geometry_msgs::Wrench>("wrench_topic", 10); 
+    // Get parameters from ros parameter master
     if (ros::param::has("~ip_address"))
     {
-        if (!ros::param::get("~ip_address", global_ip_address))
+        if (!ros::param::get("~ip_address", ip_address))
         {
-            ROS_WARN_STREAM("Failed to parse ip_address parameter, using default value: " << global_ip_address);
+            ROS_WARN_STREAM("Failed to parse ip_address parameter, using default value: " << ip_address);
         }
     }
     else
     {
-        ROS_WARN_STREAM("No ip_address parameter found, using default value: " << global_ip_address);
+        ROS_WARN_STREAM("No ip_address parameter found, using default value: " << ip_address);
     }
     if (ros::param::has("~port"))
     {
-        if (!ros::param::get("~port", global_port_number))
+        if (!ros::param::get("~port", port_number))
         {
-            ROS_WARN_STREAM("Failed to parse port parameter, using default value: " << global_port_number);
+            ROS_WARN_STREAM("Failed to parse port parameter, using default value: " << port_number);
         }
     }
     else
     {
-        ROS_WARN_STREAM("No port parameter found, using default value: " << global_port_number);
+        ROS_WARN_STREAM("No port parameter found, using default value: " << port_number);
     }
     if (ros::param::has("~publish_frequency"))
     {
@@ -114,15 +117,14 @@ int main(int argc, char  *argv[])
         ROS_WARN_STREAM("No publish_frequency parameter found, using default value: " << global_publish_frequency);
     }
 
-    // 传感器初始化
-    SRI::CommEthernet *ce = new SRI::CommEthernet(global_ip_address, global_port_number);
+    // FTsensor initialization
+    SRI::CommEthernet *ce = new SRI::CommEthernet(ip_address, port_number);
     SRI::FTSensor sensor(ce);
     double x, y, z, mx, my, mz;
     auto rtDataValid = sensor.getRealTimeDataValid();
     auto rtMode = sensor.getRealTimeDataMode();
 
     sensor.startRealTimeDataRepeatedly<float>(&rtDataHandler, rtMode, rtDataValid);
-    std::cout << "Hello, World!" << std::endl;
-    ros::spin(); // 进入循环，等待回调函数
+    ros::spin(); 
     return 0;
 }
